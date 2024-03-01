@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js"
+      integrity="sha512-NQfB/bDaB8kaSXF8E77JjhHG5PM6XVRxvHzkZiwl3ddWCEPBa23T76MuWSwAJdMGJnmQqM0VeY9kFszsrBEFrQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+      integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8="
+      crossorigin="anonymous"
+    ></script>
+    <script src="../js/main.js"></script>
+    <title>Item editor</title>
+   <style>
+     
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #121212;
+  color: #ffffff;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.cont {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.form {
+  background-color: #333333;
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  padding: 40px;
+  width: auto;
+  max-width: 500px;
+}
+
+.form input[type="text"],
+.form textarea {
+  width: calc(100% - 20px); 
+  padding: 12px;
+  margin: 10px 0;
+  border: 2px solid #555555;
+  border-radius: 10px;
+  background-color: #222222;
+  color: #ddd;
+  box-sizing: border-box;
+  transition: border 0.3s ease;
+}
+
+.form input[type="text"]:focus,
+.form textarea:focus {
+  border-color: #009688;
+}
+
+.form button {
+  background-color: #009688;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 10px;
+}
+
+.form button:hover {
+  background-color: #00796b;
+}
+
+.form button:active {
+  background-color: #004d40;
+}
+
+.images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: start;
+  margin-top: 15px;
+}
+
+.image {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.image img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border: 2px solid #555555;
+  border-radius: 30%; 
+}
+
+@media screen and (max-width: 768px) {
+  .form {
+    width: 90%;
+    padding: 20px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .form {
+    width: 95%;
+  }
+}
+   </style>
+  </head>
+  <body>
+    <div class="cont">
+    <div class="form">
+      <input type="text" placeholder="Title" id="field-title" />
+      <textarea
+        type="text"
+        placeholder="Description"
+        id="field-desc"
+      ></textarea>
+      <div class="images"></div>
+      <button id="add-image">Add image</button>
+
+      <button id="action-button">Create</button>
+      <button id="action-button-delete">Delete item</button>
+
+      <button onClick="window.location.reload();">Reset Changes</button>
+    </div>
+  </div>
+  </body>
+
+  <script defer>
+    let images = [];
+    $(document).ready(async () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const id = searchParams.get("id");
+
+      if (id) {
+        $("#action-button").text("Update item");
+        try {
+          const response = await axios.get(`/items/${id}`);
+          const data = response.data.data;
+          console.log(data);
+          $("#field-title").val(data.title);
+          $("#field-desc").val(data.description);
+          images = data.images;
+          updateImgList();
+        } catch (e) {
+          const errorCode = e?.response?.data?.code ?? "Unknown error";
+          const errorMessage = e?.response?.data?.message ?? "";
+          alert(`Failed. Error: ${errorCode} (${errorMessage})`);
+          console.error(e);
+        }
+      }
+      else {
+        $('#action-button-delete').remove();
+      }
+      $("#action-button").click(async () => {
+        const title = $("#field-title").val(),
+          description = $("#field-desc").val();
+        try {
+          const response = await axios.post("/items", {
+            _id: id ?? null,
+            title,
+            description,
+            images,
+          }, {
+            headers: {
+              'Authentication': `JWT ${User.accessToken}`
+            }
+          });
+          alert('Success')
+          window.location.reload();
+        } catch (e) {
+          const errorCode = e?.response?.data?.code ?? "Unknown error";
+          const errorMessage = e?.response?.data?.message ?? "";
+          alert(`Failed. Error: ${errorCode} (${errorMessage})`);
+        }
+      });
+
+      $('#action-button-delete').click(async () => {
+        try {
+          const response = await axios.delete(`/items/${id}`, {
+          }, {
+            headers: {
+              'Authentication': `JWT ${User.accessToken}`
+            }
+          });
+          alert('Success')
+          window.location.reload();
+        } catch (e) {
+          const errorCode = e?.response?.data?.code ?? "Unknown error";
+          const errorMessage = e?.response?.data?.message ?? "";
+          alert(`Failed. Error: ${errorCode} (${errorMessage})`);
+        }
+      })
+      $("#add-image").click(() => {
+        images.push("");
+        updateImgList();
+      });
+
+      $('body').on('change', '.img-field', function() {
+        try {
+            const ind = parseInt($(this).attr('data-id'));
+            if (images[ind] == undefined) return;
+            
+            images[ind] = $(this).val();
+            updateImgList();
+        }
+        catch(e) {
+            console.error(e)
+        }
+      });
+
+      $('body').on('click', '.img-field-delete', function() {
+        try {
+            const ind = parseInt($(this).attr('data-id'));
+            if (isNaN(ind)) return;
+            images.splice(ind, 1);
+            updateImgList();
+        }
+        catch(e) {
+            console.error(e)
+        }
+      });
+    });
+
+    function updateImgList() {
+      console.log(images);
+      $(".images").html("");
+      for (let i = 0; i < images.length; i++) {
+        $(".images").html(
+          $(".images").html() +
+            `<div class="image">
+                <img src="${images[i]}"/>
+                <input type="text" class="img-field" id="img-field-${i}" data-id="${i}"/>
+                <button class="img-field-delete" data-id="${i}">X</button>
+            </div>
+            `
+        );
+      }
+      for (let i = 0; i < images.length; i++) {
+        $(`#img-field-${i}`).val(images[i]);
+      }
+    }
+  </script>
+</html>

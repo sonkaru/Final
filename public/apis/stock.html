@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+        integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
+    <style>
+        #cryptoChart {
+            width: 100%;
+            height: 400px;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <h2 id="label">Showing Stock Graph in loading...</h2>
+    <canvas id="cryptoChart" width="300" height="250"></canvas>
+
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    $(document).ready(() => {
+        const STOCK_ID = 'AAPL'
+        fetch(`https://financialmodelingprep.com/api/v3/historical-chart/5min/${STOCK_ID}?from=2023-08-10&to=2023-08-12&apikey=6L8g744csSmVacwJPvuWRVVgXuXahUEP`)
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                const ctx = document.getElementById('cryptoChart').getContext('2d');
+                const apiData = data;
+
+                $('#label').text(`Showing Stock Graph of ${STOCK_ID}`)
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: apiData.map((g) => g.date),
+                        datasets: [{
+                            label: STOCK_ID,
+                            data: apiData.map((g) => g.close),
+                            backgroundColor: 'rgba(255, 0, 0, 1)',
+                            borderColor: 'rgba(230, 0, 0, 0.7)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    })
+
+
+
+</script>
+
+</html>

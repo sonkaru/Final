@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js"
+      integrity="sha512-NQfB/bDaB8kaSXF8E77JjhHG5PM6XVRxvHzkZiwl3ddWCEPBa23T76MuWSwAJdMGJnmQqM0VeY9kFszsrBEFrQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+      integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8="
+      crossorigin="anonymous"
+    ></script>
+    <script src="../js/main.js"></script>
+    <title>Item</title>
+    <style>
+
+body {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  background-color: #1A1A1A;
+  color: #E0E0E0;
+}
+
+h2, #founditems {
+  display: none; 
+}
+
+
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  gap: 20px;
+  background-color: #2A2A2A;
+  height: 100vh;
+  box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.5);
+}
+
+#field-search, button {
+  width: auto; 
+  margin: 0;
+}
+
+
+.items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  width: calc(100vw - 240px);
+  margin-left: 240px; 
+  align-self: start;
+}
+
+.item {
+  transition: transform 0.3s ease;
+}
+
+.item img {
+  width: 100%;
+}
+
+.item:hover {
+  transform: scale(1.05);
+}
+
+
+#field-search, button, #loadmore {
+  border: 2px solid #FF6F00;
+  background-color: #333;
+  color: #FF6F00;
+  border-radius: 20px;
+  padding: 10px 15px;
+  text-align: center;
+  cursor: pointer;
+}
+
+#field-search:focus {
+  outline: none;
+  border-color: #FFD54F;
+}
+
+button:hover, #loadmore:hover {
+  background-color: #FF6F00;
+  color: #333;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.items, .item, .side-panel {
+  animation: fadeInUp 0.5s ease-out;
+}
+    </style>
+  </head>
+  <body>
+    <h2>Items</h2>
+    <span id="founditems" style="margin-bottom: 20px;">Total 0 items</span>
+    <div style="width: 200px; padding-bottom: 20px;">
+        <a href="/items/editor.html"><button>Create new item</button></a>
+    </div>
+    <input placeholder="Search..." id="field-search"/>
+    <div class="items"></div>
+    <button style="width: 150px; margin-top: 10px" id="loadmore">
+      Load more
+    </button>
+    
+  </body>
+
+  <script defer>
+    $(document).ready(async () => {
+
+        User.renderUserComponent();
+      const searchParams = new URLSearchParams(window.location.search);
+
+      $("#loadmore").click(() => {
+        nextPage();
+      });
+      $('#field-search').keyup(() => {
+        refetchPage();
+      })
+
+      nextPage()
+    });
+
+    const limit = 10;
+    let skip = 0;
+
+    async function refetchPage() {
+      skip = 0;
+      $(".items").html('');
+      await nextPage();
+    }
+    async function nextPage() {
+      try {
+        const response = await axios.post(`/items/page`, {
+          limit,
+          skip,
+          filter: {
+            search: $('#field-search').val()
+          },
+        });
+        const data = response.data.data;
+        const items = data.response;
+        if (items.length <= 0) {
+            $("#loadmore").remove();
+        }
+        skip += limit;
+        $('#founditems').text(`Total ${data.totalDocuments} items`)
+        console.log(data);
+        for (const item of items) {
+          $(".items").html(
+            $(".items").html() +
+            `
+            <div class="item">
+                <img src="${item.images[0]}"/>
+                <a href="/items/page.html?id=${item._id}"><h1>${item.title}</h1></a>
+                <h3>${item.description}</h3>
+                <span>${item.createdAt}</span>
+            </div>
+            `
+          );
+        }
+      } catch (e) {
+        const errorCode = e?.response?.data?.code ?? "Unknown error";
+        const errorMessage = e?.response?.data?.message ?? "";
+        alert(`Failed. Error: ${errorCode} (${errorMessage})`);
+        console.error(e);
+      }
+    }
+  </script>
+</html>

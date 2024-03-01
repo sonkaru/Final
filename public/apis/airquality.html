@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+        integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
+    <style>
+        #cryptoChart {
+            width: 100%;
+            height: 400px;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <h2 id="label">Showing Air Quality in loading...</h2>
+    <canvas id="cryptoChart" width="300" height="250"></canvas>
+
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    $(document).ready(() => {
+
+        fetch('https://api.waqi.info/feed/here/?token=c3a737fe2389fa2f6ac0fcfd3ea256d319a7e920')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                const ctx = document.getElementById('cryptoChart').getContext('2d');
+                const graph = [];
+                const labels = [];
+                if (data.status != 'ok') {
+                    alert('API error')
+                    return;
+                }
+                const apiData = data.data;
+
+                $('#label').text(`Showing Air Quality in ${apiData.city.name}`)
+
+                let gotLabels = false;
+                for (let type in apiData.forecast.daily) {
+                    let backgroundColor = 'rgba(255, 99, 132, 0.2)',
+                        borderColor = 'rgba(255, 99, 132, 1)';
+                    switch (type) {
+                        case 'o3': {
+                            backgroundColor = 'rgba(0, 0, 255, 1)';
+                            borderColor = 'rgba(0, 0, 230, 0.7)';
+                        } break;
+                        case 'pm10': {
+                            backgroundColor = 'rgba(255, 0, 0, 1)';
+                            borderColor = 'rgba(230, 0, 0, 0.7)';
+                        } break;
+                        case 'pm25': {
+                            backgroundColor = 'rgba(0, 255, 0, 1)';
+                            borderColor = 'rgba(0, 230, 0, 0.7)';
+                        } break;
+                    }
+                    let a = {
+                        label: type,
+                        backgroundColor,
+                        borderColor,
+                        data: [],
+                    }
+                    apiData.forecast.daily[type].forEach((e) => {
+                        a.data.push(e.avg);
+                        if (!gotLabels) {
+                            labels.push(e.day);
+                        }
+                    })
+                    graph.push(a);
+                    gotLabels = true;
+                }
+                console.log(graph, labels);
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: graph.map((g) => ({
+                            label: g.label,
+                            data: g.data,
+                            backgroundColor: g.backgroundColor,
+                            borderColor: g.borderColor,
+                            borderWidth: 1
+                        }))
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                max: 80,
+                                min: 0,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    })
+
+
+
+</script>
+
+</html>

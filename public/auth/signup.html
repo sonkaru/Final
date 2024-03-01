@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js" integrity="sha512-NQfB/bDaB8kaSXF8E77JjhHG5PM6XVRxvHzkZiwl3ddWCEPBa23T76MuWSwAJdMGJnmQqM0VeY9kFszsrBEFrQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script>
+    <title>Auth page - Sign in</title>
+    <style>
+      body {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #6e8efb, #a777e3); /* 使用渐变背景 */
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around; /* 优化布局，使元素均匀分布 */
+  height: 350px; /* 调整高度以适应内容 */
+  width: 300px;
+  padding: 20px;
+  border-radius: 10px; /* 增加圆角 */
+  background-color: rgba(255, 255, 255, 0.8); /* 半透明白色背景 */
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.2); /* 加强阴影效果 */
+  backdrop-filter: blur(5px); /* 背景模糊效果 */
+}
+
+h1 {
+  color: #333;
+  text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2); /* 文字阴影 */
+}
+
+input[type="text"],
+input[type="password"] {
+  padding: 15px 20px; /* 增加内边距 */
+  border: none;
+  border-radius: 20px; /* 更圆滑的边框 */
+  background-color: #f0f0f0;
+  box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.1); /* 内部阴影 */
+}
+
+button {
+  padding: 15px 0; /* 调整按钮大小 */
+  font-size: 18px; /* 增大字体 */
+  border-radius: 20px; /* 圆形按钮 */
+  background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%); /* 渐变按钮背景 */
+  color: #ffffff;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2); /* 按钮阴影 */
+}
+
+button:hover {
+  background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%, #4facfe 0%); /* 悬停时渐变效果 */
+}
+
+a {
+  color: #ffffff; /* 链接颜色调整为白色以适应背景 */
+  font-weight: bold; /* 加粗字体 */
+}
+
+a:hover {
+  color: #ffd700; /* 悬停时金色高亮 */
+}
+      </style>
+</head>
+<body>
+    <div class="form">
+        <h1>login</h1>
+      
+        <input type="text" placeholder="Login" id="field-login">
+        <input type="password" placeholder="Password" id="field-password">
+        <button id="action-button">Sign up</button>
+        <a href="signin.html">already have an account? Sign in</a>
+    </div>
+</body>
+
+<script defer>
+    $(document).ready(() => {
+        $('#action-button').click(async () => {
+            const login = $('#field-login').val(),
+             password = $('#field-password').val();
+            try {
+                const response = await axios.post('/signup', {
+                    login, password
+                });
+                alert('Success')
+                window.location.href = 'signin.html'
+                console.log(response.data);
+            } catch(e) {
+                const errorCode = e?.response?.data?.code ?? 'Unknown error';
+                const errorMessage = e?.response?.data?.message ?? '';
+                alert(`Could sign up. Error: ${errorCode} (${errorMessage})`);
+            }
+        });
+    });
+</script>
+</html>

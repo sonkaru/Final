@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js"
+      integrity="sha512-NQfB/bDaB8kaSXF8E77JjhHG5PM6XVRxvHzkZiwl3ddWCEPBa23T76MuWSwAJdMGJnmQqM0VeY9kFszsrBEFrQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+      integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8="
+      crossorigin="anonymous"
+    ></script>
+    <script src="../js/main.js"></script>
+    <title>User</title>
+    <style>
+  /* 页面整体背景和字体样式 */
+body {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #282c34;
+  color: #ffffff;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  overflow: hidden;
+}
+
+/* 隐藏原标题和用户总数 */
+h2, #foundusers {
+  display: none;
+}
+
+/* 搜索框和加载更多按钮的新样式 */
+#field-search, #loadmore {
+  position: fixed;
+  bottom: 20px;
+  z-index: 10;
+}
+#field-search {
+  left: 20px;
+}
+#loadmore {
+  right: 20px;
+}
+
+/* 用户列表样式调整为环形布局 */
+.users {
+  position: relative;
+  width: 80vw;
+  height: 80vh;
+  max-width: 600px;
+  max-height: 600px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 用户卡片样式调整 */
+.user {
+  position: absolute;
+  width: 120px;
+  height: 180px;
+  border: 2px solid #61dafb;
+  border-radius: 10px;
+  background-color: #20232a;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.5s ease;
+}
+
+/* 动态定位用户卡片 */
+.users .user {
+  /* 使用CSS变量计算角度 */
+  --rotation-angle: calc(var(--user-index) * 1turn / var(--total-users));
+}
+.users .user:nth-child(1) { --user-index: 1; --total-users: 8; }
+.users .user:nth-child(2) { --user-index: 2; --total-users: 8; }
+.users .user:nth-child(3) { --user-index: 3; --total-users: 8; }
+/* 为每个用户卡片重复以上规则，直到覆盖所有可能的用户卡片 */
+
+/* 使用CSS的calc()和var()将卡片分散成环形 */
+.user {
+  height:250px;
+  width:500px;
+}
+
+/* 用户头像样式调整 */
+.user img {
+  border-radius: 10px 10px 0 0;
+}
+
+/* 加载更多按钮样式调整 */
+#loadmore {
+  border: 2px solid #61dafb;
+  background-color: transparent;
+  color: #61dafb;
+  font-weight: bold;
+}
+#loadmore:hover {
+  background-color: #61dafb;
+  color: #20232a;
+}
+
+    </style>
+  </head>
+  <body>
+    <h2>Users</h2>
+    <span id="foundusers" style="margin-bottom: 20px;">Total 0 users</span>
+    <div style="width: 200px; padding-bottom: 20px;">
+    </div>
+    
+    <div class="users"></div>
+    <button style="width: 150px; margin-top: 10px" id="loadmore">
+      Load more
+    </button>
+  </body>
+
+  <script defer>
+    $(document).ready(async () => {
+
+        User.renderUserComponent();
+      const searchParams = new URLSearchParams(window.location.search);
+
+      $("#loadmore").click(() => {
+        nextPage();
+      });
+      $('#field-search').keyup(() => {
+        refetchPage();
+      })
+
+      nextPage()
+    });
+
+    const limit = 10;
+    let skip = 0;
+
+    async function refetchPage() {
+      skip = 0;
+      $(".users").html('');
+      await nextPage();
+    }
+    async function nextPage() {
+      try {
+        const response = await axios.post(`/users/page`, {
+          limit,
+          skip,
+          filter: {
+            search: $('#field-search').val()
+          },
+        }, {
+            headers: {
+              'Authentication': `JWT ${User.accessToken}`
+            }
+          });
+        const data = response.data.data;
+        const users = data.response;
+        if (users.length <= 0) {
+            $("#loadmore").remove();
+        }
+        skip += limit;
+        $('#foundusers').text(`Total ${data.totalDocuments} users`)
+        console.log(data);
+        for (const user of users) {
+          $(".users").html(
+            $(".users").html() +
+            `
+            <div class="user">
+                <a href="/users/editor.html?id=${user._id}"><h1>${user.login}</h1></a>
+                <div style="display: flex; flex-direction: column">
+                    <h3>${user.profile.fullname}</h3>
+                    <span>${user.profile.age} y.o.</span>
+                    <span>From ${user.profile.country}</span>
+                    <span>With us since ${user.createdAt}</span>
+                </div>
+            </div>
+            `
+          );
+        }
+      } catch (e) {
+        const errorCode = e?.response?.data?.code ?? "Unknown error";
+        const errorMessage = e?.response?.data?.message ?? "";
+        alert(`Failed. Error: ${errorCode} (${errorMessage})`);
+        console.error(e);
+      }
+    }
+  </script>
+</html>

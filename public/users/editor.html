@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js"
+      integrity="sha512-NQfB/bDaB8kaSXF8E77JjhHG5PM6XVRxvHzkZiwl3ddWCEPBa23T76MuWSwAJdMGJnmQqM0VeY9kFszsrBEFrQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+      integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8="
+      crossorigin="anonymous"
+    ></script>
+    <script src="../js/main.js"></script>
+    <title>Item editor</title>
+    <style>
+     body {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  background-color: #282a36; /* 暗色主题背景 */
+  color: #f8f8f2; /* 亮色字体 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.cont {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  gap: 20px;
+  text-align: center;
+  background-color: #44475a; /* 表单背景 */
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* 添加阴影效果 */
+}
+
+.form input[type="text"], .form select {
+  padding: 10px;
+  background-color: #6272a4; /* 输入框背景 */
+  border: none;
+  border-radius: 5px;
+  color: #f8f8f2; /* 输入框文字颜色 */
+}
+
+.form button {
+  padding: 10px 0;
+  background-color: #50fa7b; /* 按钮背景 */
+  border: none;
+  border-radius: 5px;
+  color: #282a36; /* 按钮文字颜色 */
+  cursor: pointer;
+  transition: background-color 0.3s ease; /* 过渡效果 */
+}
+
+.form button:hover {
+  background-color: #6272a4; /* 按钮悬浮效果 */
+}
+
+.images {
+  display: none; /* 隐藏图片展示部分，保持简洁 */
+}
+    </style>
+  </head>
+  <body>
+    <div class="cont">
+    <div class="form">
+      <input type="text" placeholder="Title" id="field-login" />
+      <input
+        type="text"
+        placeholder="Fullname"
+        id="field-fullname"
+      />
+      <input type="text" placeholder="Age" id="field-age" />
+      <input type="text" placeholder="Country" id="field-country" />
+      <select name="role" placeholder="Role" id="field-role" >
+        <option value="regular">Regular user</option>
+        <option value="admin">Administrator</option>
+      </select>
+      <div class="images"></div>
+      <button id="action-button">Create</button>
+      <button onClick="window.location.reload();">Reset Changes</button>
+    </div>
+  </div>
+  </body>
+
+  <script defer>
+    $(document).ready(async () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const id = searchParams.get("id");
+
+      if (id) {
+        $("#action-button").text("Update user");
+        try {
+          const response = await axios.get(`/users/${id}`, {
+            headers: {
+              'Authentication': `JWT ${User.accessToken}`
+            }
+          });
+          const data = response.data.data;
+          console.log(data);
+          $("#field-login").val(data.login);
+          $("#field-role").val(data.role);
+          $("#field-fullname").val(data.profile.fullname ?? '');
+          $("#field-age").val(data.profile.age ?? '');
+          $("#field-country").val(data.profile.country ?? '');
+        } catch (e) {
+          const errorCode = e?.response?.data?.code ?? "Unknown error";
+          const errorMessage = e?.response?.data?.message ?? "";
+          alert(`Failed. Error: ${errorCode} (${errorMessage})`);
+          console.error(e);
+        }
+      }
+      $("#action-button").click(async () => {
+        const user = {
+            login: $("#field-login").val(),
+            role: $('#field-role').val(),
+            profile: {
+                fullname: $("#field-fullname").val(),
+                age: $("#field-age").val(),
+                country: $("#field-country").val(),
+            }
+        }
+        try {
+          const response = await axios.post("/users", {
+            _id: id ?? null,
+            ...user,
+          }, {
+            headers: {
+              'Authentication': `JWT ${User.accessToken}`
+            }
+          });
+          alert('Success')
+          window.location.reload();
+        } catch (e) {
+          const errorCode = e?.response?.data?.code ?? "Unknown error";
+          const errorMessage = e?.response?.data?.message ?? "";
+          alert(`Failed. Error: ${errorCode} (${errorMessage})`);
+        }
+      });
+    });
+  </script>
+</html>

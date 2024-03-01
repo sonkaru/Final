@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js"
+      integrity="sha512-NQfB/bDaB8kaSXF8E77JjhHG5PM6XVRxvHzkZiwl3ddWCEPBa23T76MuWSwAJdMGJnmQqM0VeY9kFszsrBEFrQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+      integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8="
+      crossorigin="anonymous"
+    ></script>
+    <script src="../js/main.js"></script>
+    <title>Item</title>
+    <style>
+    
+    </style>
+  </head>
+  <body>
+  
+    <button id="action-edit" style="width: 200px; margin-top: 10px;">Edit item</button>
+    
+  </body>
+
+  <script defer>
+    $(document).ready(async () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const id = searchParams.get("id");
+
+      if (!id) {
+        window.location.href = '/';
+      }
+
+      $('#action-edit').click(() => {
+        window.location.href = `/items/editor.html?id=${id}`
+      })
+
+      try {
+        const response = await axios.get(`/items/${id}`);
+        const data = response.data.data;
+        console.log(data);
+        $('#title').html(data.title);
+        $('#desc').html(data.description);
+
+        for(let image of data.images) {
+            $('.images').html($('.images').html() + `<img src="${image}"/>`);
+        }
+      } catch (e) {
+        const errorCode = e?.response?.data?.code ?? "Unknown error";
+        const errorMessage = e?.response?.data?.message ?? "";
+        alert(`Failed. Error: ${errorCode} (${errorMessage})`);
+        console.error(e);
+      }
+    });
+  </script>
+</html>
